@@ -20,3 +20,6 @@ clients/node/node_modules/
 vendor/
 
 *.bak_lint
+
+fix_*.py
+*.bak_*
