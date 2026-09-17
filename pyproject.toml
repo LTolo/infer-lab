@@ -9,7 +9,7 @@ description = "A vertically-integrated LLM inference engine laboratory: PagedAtt
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "infer-lab contributors" }]
+authors = [{ name = "LTolo" }]
 keywords = ["llm", "inference", "pagedattention", "vllm", "sglang", "cuda", "profiling"]
 
 dependencies = [
