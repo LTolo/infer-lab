@@ -18,3 +18,5 @@ clients/csharp/bin/
 clients/csharp/obj/
 clients/node/node_modules/
 vendor/
+
+*.bak_lint
