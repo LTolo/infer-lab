@@ -317,30 +317,11 @@ def stage_clients() -> None:
                "compiled with MSVC"
                if proc.returncode == 0 else (proc.stdout or proc.stderr)[-300:])
     elif kind == "unix":
-        # probe.c is C; detect_compiler() returns a C++ driver, because its job
-        # is finding a compiler for the C++ kernels. Handing `-std=c11` to a C++
-        # driver is a warning on GCC and a hard error on Clang -- which is why
-        # Ubuntu passed while macOS failed on the identical command.
-        #
-        # "Which compiler exists" and "which compiler compiles C" are different
-        # questions; one answer cannot serve both.
-        c_compiler = None
-        for candidate in ("cc", "clang", "gcc"):
-            c_compiler = shutil.which(candidate)
-            if c_compiler:
-                break
-
-        if c_compiler:
-            cmd = [c_compiler, "-O2", "-std=c11", source, "-o", str(build / "probe")]
-        else:
-            # Only a C++ driver available: let it compile the C file, but drop
-            # the C-only flag it would reject.
-            cmd = [cc, "-O2", source, "-o", str(build / "probe")]
-
-        proc = run(cmd, env=env)
+        proc = run([cc, "-O2", "-std=c11", source, "-o", str(build / "probe")],
+                   env=env)
         record("C latency probe", PASS if proc.returncode == 0 else FAIL,
-               f"compiled with {Path(cmd[0]).name}"
-               if proc.returncode == 0 else (proc.stderr or proc.stdout)[-300:])
+               f"compiled with {Path(cc).name}"
+               if proc.returncode == 0 else proc.stderr[-300:])
     else:
         record("C latency probe", SKIP, reason)
 
