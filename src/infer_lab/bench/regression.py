@@ -16,7 +16,7 @@ import statistics
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Literal
 
 Direction = Literal["lower_is_better", "higher_is_better"]
 

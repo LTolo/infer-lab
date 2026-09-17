@@ -6,7 +6,7 @@ a unit test and the HTTP server all describe the *same* system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 

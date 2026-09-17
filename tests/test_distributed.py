@@ -7,12 +7,17 @@ import pytest
 
 from infer_lab.distributed.health import HealthMonitor, PeerState
 from infer_lab.distributed.pipeline_parallel import (
-    PipelineSchedule, PipelineStage, split_layers,
+    PipelineSchedule,
+    PipelineStage,
+    split_layers,
 )
-from infer_lab.distributed.ring_allreduce import RingError, run_ring_allreduce
+from infer_lab.distributed.ring_allreduce import run_ring_allreduce
 from infer_lab.distributed.tensor_parallel import (
-    ColumnParallelLinear, RowParallelLinear, TensorParallelAttention,
-    shard_tensor, verify_equivalence,
+    ColumnParallelLinear,
+    RowParallelLinear,
+    TensorParallelAttention,
+    shard_tensor,
+    verify_equivalence,
 )
 
 

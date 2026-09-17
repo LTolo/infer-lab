@@ -94,7 +94,7 @@ def flash_attention(q: np.ndarray, k: np.ndarray, v: np.ndarray,
         q1 = min(q0 + block_q, sq)
         qt = q[q0:q1].astype(np.float32)                     # (bq, H, D)
         m = np.full((q1 - q0, h), -np.inf, dtype=np.float32)  # running max
-        l_sum = np.zeros((q1 - q0, h), dtype=np.float32)      # running sum (`l` in the paper)
+        l = np.zeros((q1 - q0, h), dtype=np.float32)          # running sum
         acc = np.zeros((q1 - q0, h, d), dtype=np.float32)
 
         for k0 in range(0, sk, block_k):
@@ -117,11 +117,11 @@ def flash_attention(q: np.ndarray, k: np.ndarray, v: np.ndarray,
             p = np.where(np.isfinite(s), p, 0.0)
             alpha = np.exp(np.where(np.isfinite(m), m, -np.inf) - safe_m)
             alpha = np.where(np.isfinite(alpha), alpha, 0.0)
-            l_sum = l_sum * alpha + np.sum(p, axis=-1)
+            l = l * alpha + np.sum(p, axis=-1)
             acc = acc * alpha[..., None] + np.einsum("qhk,khd->qhd", p, vt)
             m = new_m
 
-        denom = np.where(l_sum > 0, l_sum, 1.0)
+        denom = np.where(l > 0, l, 1.0)
         out[q0:q1] = acc / denom[..., None]
 
     return out.astype(DTYPE)

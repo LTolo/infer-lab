@@ -34,7 +34,7 @@ DTYPE = np.float32
 class SequenceKV:
     """A sequence's view onto the paged pool."""
 
-    cache: "PagedKVCache"
+    cache: PagedKVCache
     block_table: list[int] = field(default_factory=list)
     length: int = 0                 # number of tokens whose KV has been written
     num_cached_prefix: int = 0      # tokens served from the prefix cache (no recompute)

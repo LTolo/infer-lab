@@ -25,7 +25,6 @@ from dataclasses import dataclass, field
 
 from infer_lab.config import EngineConfig
 from infer_lab.engine.request import Request, RequestState
-from infer_lab.kv.block_allocator import OutOfBlocks
 from infer_lab.kv.paged_cache import PagedKVCache
 from infer_lab.kv.radix_cache import RadixCache
 from infer_lab.utils.logging_conf import get_logger

@@ -1,9 +1,9 @@
 from infer_lab.quant.int8 import (
     QuantizedMatrix,
-    quantize_per_channel,
     dequantize,
-    quantized_matmul,
     quantization_error,
+    quantize_per_channel,
+    quantized_matmul,
 )
 
 __all__ = [

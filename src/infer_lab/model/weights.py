@@ -48,7 +48,7 @@ class ModelWeights:
     lm_head: np.ndarray        # (h, vocab)
 
     @staticmethod
-    def random(config: ModelConfig, seed: int = 0) -> "ModelWeights":
+    def random(config: ModelConfig, seed: int = 0) -> ModelWeights:
         rng = np.random.default_rng(seed)
         h = config.hidden_size
         i = config.intermediate_size

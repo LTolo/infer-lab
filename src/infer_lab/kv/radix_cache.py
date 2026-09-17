@@ -18,8 +18,8 @@ cached continuation still depends on it.
 from __future__ import annotations
 
 import itertools
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import Iterator, Sequence
 
 from infer_lab.kv.block_allocator import BlockAllocator
 
@@ -28,8 +28,8 @@ from infer_lab.kv.block_allocator import BlockAllocator
 class RadixNode:
     tokens: tuple[int, ...] = ()                 # the block_size tokens on the incoming edge
     block_id: int | None = None                  # physical KV block for those tokens
-    parent: "RadixNode | None" = None
-    children: dict[tuple[int, ...], "RadixNode"] = field(default_factory=dict)
+    parent: RadixNode | None = None
+    children: dict[tuple[int, ...], RadixNode] = field(default_factory=dict)
     last_access: int = 0
     depth: int = 0                               # number of cached tokens up to and incl. this node
 

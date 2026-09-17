@@ -5,13 +5,13 @@ available, the pure-NumPy reference kernels are used and every test still runs.
 """
 
 from infer_lab.kernels.numpy_kernels import (
+    apply_rope,
+    flash_attention,
+    naive_attention,
     rms_norm,
+    rope_cos_sin,
     softmax,
     swiglu,
-    naive_attention,
-    flash_attention,
-    rope_cos_sin,
-    apply_rope,
 )
 from infer_lab.kernels.registry import KernelRegistry, get_registry
 

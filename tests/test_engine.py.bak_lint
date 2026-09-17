@@ -65,7 +65,7 @@ def test_batched_results_equal_sequential_results(model_config, engine_config):
     batched = LLMEngine(model_config, engine_config).generate(prompts, greedy(10))
     batched_tokens = {o.request_id: o.output_token_ids for o in batched}
 
-    for prompt, out in zip(prompts, batched, strict=True):
+    for prompt, out in zip(prompts, batched):
         alone = LLMEngine(model_config, engine_config).generate([prompt], greedy(10))[0]
         assert alone.output_token_ids == batched_tokens[out.request_id], (
             "batching changed the output of a sequence"
@@ -135,7 +135,7 @@ def test_preemption_under_memory_pressure_preserves_output(model_config):
     roomy_out = LLMEngine(model_config, roomy).generate(prompts, greedy(40))
 
     assert tight_engine.scheduler.stats.preemptions > 0, "test did not exercise preemption"
-    for a, b in zip(tight_out, roomy_out, strict=True):
+    for a, b in zip(tight_out, roomy_out):
         assert a.output_token_ids == b.output_token_ids
     assert tight_engine.kv_cache.allocator.num_free == tight.num_gpu_blocks, "KV leak"
 

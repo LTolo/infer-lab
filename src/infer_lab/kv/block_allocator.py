@@ -12,7 +12,7 @@ returned to the free list when the last referent releases it.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class OutOfBlocks(RuntimeError):

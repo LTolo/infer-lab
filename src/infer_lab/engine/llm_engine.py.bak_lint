@@ -174,10 +174,7 @@ class LLMEngine:
             kvs = [r.kv for r in decodes]
             assert all(kv is not None for kv in kvs)
             batch_logits = self.model.forward_decode_batch(tokens, kvs, positions)  # type: ignore[arg-type]
-            # strict=True: one logit row per decoding sequence is an
-            # invariant of forward_decode_batch. Plain zip() would drop a
-            # sequence's token silently if that ever stopped holding.
-            for request, logits in zip(decodes, batch_logits, strict=True):
+            for request, logits in zip(decodes, batch_logits):
                 request.num_computed_tokens += 1
                 self._emit(request, logits)
                 outputs.append(self._output_for(request))

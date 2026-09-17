@@ -9,8 +9,8 @@ import dances.
 from __future__ import annotations
 
 import functools
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from infer_lab.utils.logging_conf import get_logger
 
@@ -60,6 +60,7 @@ class KernelRegistry:
         # --- PyTorch mirror
         try:
             import torch  # noqa: F401
+
             from infer_lab.kernels import torch_kernels as tk
 
             self._backends["torch"] = Backend(

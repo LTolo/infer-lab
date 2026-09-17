@@ -15,6 +15,6 @@ Layers (bottom-up):
 
 __version__ = "0.1.0"
 
-from infer_lab.config import ModelConfig, EngineConfig  # noqa: E402,F401
+from infer_lab.config import EngineConfig, ModelConfig  # noqa: E402,F401
 
 __all__ = ["ModelConfig", "EngineConfig", "__version__"]

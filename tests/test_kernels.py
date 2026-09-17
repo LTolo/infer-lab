@@ -7,7 +7,13 @@ import pytest
 
 from infer_lab.kernels import native
 from infer_lab.kernels.numpy_kernels import (
-    apply_rope, flash_attention, naive_attention, rms_norm, rope_cos_sin, softmax, swiglu,
+    apply_rope,
+    flash_attention,
+    naive_attention,
+    rms_norm,
+    rope_cos_sin,
+    softmax,
+    swiglu,
 )
 from infer_lab.kernels.registry import get_registry
 

@@ -6,7 +6,10 @@ import numpy as np
 import pytest
 
 from infer_lab.quant.int8 import (
-    dequantize, quantization_error, quantize_per_channel, quantized_matmul,
+    dequantize,
+    quantization_error,
+    quantize_per_channel,
+    quantized_matmul,
 )
 
 

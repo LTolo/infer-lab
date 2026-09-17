@@ -7,10 +7,17 @@ import pytest
 from infer_lab.config import ModelConfig
 from infer_lab.fleet.hardware import PROFILES, get_profile
 from infer_lab.fleet.multi_pool import (
-    MultiPoolScheduler, Pool, WorkloadRequest, default_fleet,
+    MultiPoolScheduler,
+    Pool,
+    WorkloadRequest,
+    default_fleet,
 )
 from infer_lab.fleet.roofline import (
-    analyze_decode, analyze_prefill, batch_sweep, crossover_batch_size, kv_cache_capacity,
+    analyze_decode,
+    analyze_prefill,
+    batch_sweep,
+    crossover_batch_size,
+    kv_cache_capacity,
 )
 
 

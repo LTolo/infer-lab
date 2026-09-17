@@ -19,8 +19,8 @@ import platform
 import statistics
 import sys
 import time
-from dataclasses import dataclass, field, asdict
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
+from dataclasses import asdict, dataclass, field
 
 import numpy as np
 
@@ -42,7 +42,7 @@ class LatencyStats:
     stdev_ms: float
 
     @staticmethod
-    def from_samples(samples: Sequence[float]) -> "LatencyStats":
+    def from_samples(samples: Sequence[float]) -> LatencyStats:
         clean = [s for s in samples if s == s and s not in (float("inf"), float("-inf"))]
         if not clean:
             nan = float("nan")

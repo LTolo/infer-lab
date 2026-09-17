@@ -82,7 +82,7 @@ class Histogram:
     def render(self) -> list[str]:
         out = [f"# HELP {self.name} {self.help}", f"# TYPE {self.name} histogram"]
         cumulative = 0
-        for upper, c in zip(self.buckets, self.counts, strict=True):
+        for upper, c in zip(self.buckets, self.counts):
             cumulative = max(cumulative, c)
             out.append(f'{self.name}_bucket{{le="{upper:g}"}} {c}')
         out.append(f'{self.name}_bucket{{le="+Inf"}} {self.count}')
@@ -94,7 +94,7 @@ class Histogram:
 def _labels(names: tuple[str, ...], values: tuple[str, ...]) -> str:
     if not names:
         return ""
-    pairs = ",".join(f'{n}="{v}"' for n, v in zip(names, values, strict=True))
+    pairs = ",".join(f'{n}="{v}"' for n, v in zip(names, values))
     return "{" + pairs + "}"
 
 

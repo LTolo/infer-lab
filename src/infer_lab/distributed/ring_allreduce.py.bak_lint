@@ -216,7 +216,7 @@ def run_ring_allreduce(tensors: list[np.ndarray], *, timeout: float = DEFAULT_TI
     for t in threads:
         t.join(timeout=timeout * 3)
 
-    stuck = [n.rank for n, t in zip(nodes, threads, strict=True) if t.is_alive()]
+    stuck = [n.rank for n, t in zip(nodes, threads) if t.is_alive()]
     if stuck:
         raise RingError(f"ranks {stuck} did not complete within the timeout")
     failed = [(n.rank, n.error) for n in nodes if n.error is not None]

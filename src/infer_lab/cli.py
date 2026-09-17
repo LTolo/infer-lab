@@ -81,7 +81,10 @@ def cmd_bench(args: argparse.Namespace) -> int:
 def cmd_roofline(args: argparse.Namespace) -> int:
     from infer_lab.fleet.hardware import PROFILES
     from infer_lab.fleet.roofline import (
-        analyze_decode, analyze_prefill, batch_sweep, crossover_batch_size,
+        analyze_decode,
+        analyze_prefill,
+        batch_sweep,
+        crossover_batch_size,
         kv_cache_capacity,
     )
 
@@ -222,8 +225,12 @@ def cmd_debug(args: argparse.Namespace) -> int:
 # --------------------------------------------------------------------- distributed
 def cmd_distributed(args: argparse.Namespace) -> int:
     from infer_lab.distributed import (
-        HealthMonitor, PipelineSchedule, PipelineStage, run_ring_allreduce,
-        split_layers, verify_equivalence,
+        HealthMonitor,
+        PipelineSchedule,
+        PipelineStage,
+        run_ring_allreduce,
+        split_layers,
+        verify_equivalence,
     )
 
     rng = np.random.default_rng(0)

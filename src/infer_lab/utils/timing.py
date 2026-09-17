@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Sequence
 
 
 def percentile(values: Sequence[float], q: float) -> float:
@@ -32,7 +32,7 @@ class Timer:
     samples: list[float] = field(default_factory=list)
     _start: float = 0.0
 
-    def __enter__(self) -> "Timer":
+    def __enter__(self) -> Timer:
         self._start = time.perf_counter()
         return self
 
