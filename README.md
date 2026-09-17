@@ -1,4 +1,21 @@
-# infer-lab
+<h1 align="center">infer-lab</h1>
+
+<p align="center">
+  <strong>A from-scratch LLM inference engine, built from kernels up.</strong><br>
+  PagedAttention · RadixAttention · continuous batching · speculative decoding<br>
+  C++ kernels via ctypes / pybind11 / nanobind · ring all-reduce over real TCP
+</p>
+
+<p align="center">
+  <a href="https://github.com/LTolo/infer-lab/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/LTolo/infer-lab/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%20%7C%203.12%20%7C%203.14-blue">
+  <img alt="C++" src="https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white">
+  <img alt="Platforms" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+</p>
+
+---
 
 A vertically integrated **LLM inference engine laboratory** — kernels, paged KV
 memory, an iteration-level scheduler, distributed execution, profiling tools and
@@ -320,4 +337,4 @@ scripts/        verify.py, run_stack.py
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [LICENSE](LICENSE).

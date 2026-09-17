@@ -165,3 +165,60 @@ The same reasoning applied to the engine gives ADR-0008: correctness tests verif
 *what* is computed and say nothing about whether progress is still being made.
 Here, a successful exit code says nothing about whether the output can be loaded.
 In both cases the check that mattered was one nobody had written yet.
+
+
+---
+
+## Epilogue: two more, found after this record was written
+
+Publishing the repository surfaced two further instances of the same pattern.
+Both are recorded here rather than in new ADRs, because neither is a new idea --
+they are the same mistake at a different scale.
+
+### 6. Local verification checked less than the pipeline
+
+CI ran six `verify` jobs; all six failed. `performance regression` passed. The
+only difference between those jobs is a `ruff check` step.
+
+Meanwhile `scripts/verify.py` printed **ALL CHECKS PASSED** on the same commit.
+
+The script ran the tests but not the linter, so "the project verifies" meant
+something weaker locally than it did in CI. Forty-seven lint findings were
+invisible to the tool whose entire purpose is to say whether the project is in
+a shippable state.
+
+Seven of those findings were `B905` — `zip()` without `strict=`. That is not
+cosmetic. In `llm_engine.py` the call is `zip(decodes, batch_logits)`: if those
+lengths ever diverged, a sequence would lose its token silently, with no error
+anywhere. Exactly the failure shape ADR-0008 is about.
+
+**Rule: local verification must be at least as strict as the pipeline.** A
+check that passes locally and fails remotely is not a flaky pipeline; it is a
+local check that was never doing the job.
+
+### 7. Unifying two detectors answered a question neither caller had asked
+
+Fix 5 above replaced `verify.py`'s own compiler lookup with a call to
+`build.detect_compiler()`. Correct — and it introduced a new failure:
+
+```
+clang++: warning: treating 'c' input as 'c++' when in C++ mode
+error: invalid argument '-std=c11' not allowed with 'C++'
+```
+
+`detect_compiler()` exists to find a compiler for the **C++ kernels**, so it
+returns a C++ driver. `verify.py` used it to build `clients/c/probe.c` — a C
+file — and passed `-std=c11`.
+
+GCC treats a C-only flag on the C++ driver as a warning and proceeds. Clang
+makes it an error. Same wrong command, two verdicts: Ubuntu and Windows green,
+macOS red.
+
+**Rule: a shared answer is only safe when both callers are asking the same
+question.** "Which compiler exists" and "which compiler compiles C" are not the
+same question, and deduplication that conflates them trades a visible
+disagreement for a hidden one.
+
+That the disagreement showed up at all is the argument for a multi-platform
+matrix. On a single platform this would have compiled, with a warning nobody
+reads, and stayed wrong.
