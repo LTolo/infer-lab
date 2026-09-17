@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>infer-lab &middot; control centre</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --panel2:#0f141b; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --ok:#3fb950; --warn:#d29922; --bad:#f85149;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  header { padding:14px 22px 0; border-bottom:1px solid var(--border); }
+  .top { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin-bottom:12px; }
+  h1 { margin:0; font-size:17px; letter-spacing:.5px; }
+  .sub { color:var(--muted); font-size:12px; }
+  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .up{background:var(--ok)} .down{background:var(--bad)}
+  nav { display:flex; gap:2px; flex-wrap:wrap; }
+  nav button { background:transparent; border:none; border-bottom:2px solid transparent;
+    color:var(--muted); font:inherit; font-size:13px; padding:9px 16px; cursor:pointer; }
+  nav button:hover { color:var(--text); }
+  nav button.active { color:var(--accent); border-bottom-color:var(--accent); }
+  main { padding:20px 22px 40px; }
+  .view { display:none; } .view.active { display:block; }
+  .grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:13px 15px; }
+  .card .label { color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.8px; }
+  .card .value { font-size:25px; margin-top:5px; font-weight:600; }
+  .card .unit { font-size:12px; color:var(--muted); margin-left:4px; font-weight:400; }
+  .wide { grid-column:1/-1; }
+  canvas { width:100%; height:200px; display:block; }
+  .legend { display:flex; gap:16px; margin-top:9px; font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
+  .swatch { display:inline-block; width:11px; height:3px; margin-right:6px; vertical-align:middle; }
+  pre { background:var(--panel2); border:1px solid var(--border); border-radius:8px;
+    padding:14px; overflow:auto; max-height:68vh; font-size:12px; margin:0; white-space:pre-wrap;
+    word-break:break-word; }
+  .row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:14px; }
+  label { display:block; color:var(--muted); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.7px; margin-bottom:5px; }
+  input, textarea, select { background:var(--panel2); border:1px solid var(--border);
+    color:var(--text); border-radius:6px; padding:8px 10px; font:inherit; font-size:13px; }
+  textarea { width:100%; min-height:90px; resize:vertical; }
+  button.act { background:var(--accent); color:#06121f; border:none; border-radius:6px;
+    padding:9px 18px; font:inherit; font-weight:600; cursor:pointer; }
+  button.act:hover { filter:brightness(1.12); }
+  button.act.stop { background:var(--bad); color:#fff; }
+  button.act:disabled { opacity:.45; cursor:not-allowed; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font-weight:500; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.7px; }
+  .pill { padding:2px 9px; border-radius:99px; font-size:11px; }
+  .pill.ok { background:rgba(63,185,80,.16); color:var(--ok); }
+  .pill.no { background:rgba(248,81,73,.16); color:var(--bad); }
+  .hint { color:var(--muted); font-size:12px; margin:10px 0 16px; }
+  .err { color:var(--bad); }
+  h2 { font-size:14px; margin:22px 0 10px; font-weight:600; }
+  h2:first-child { margin-top:0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <h1>infer-lab</h1>
+    <span class="sub"><span id="dot" class="dot down"></span><span id="status">connecting…</span></span>
+    <span class="sub" id="target"></span>
+    <span class="sub" id="updated"></span>
+    <span class="sub err" id="headerError"></span>
+  </div>
+  <nav>
+    <button class="active" data-view="live">Live</button>
+    <button data-view="load">Load</button>
+    <button data-view="playground">Playground</button>
+    <button data-view="stats">Engine Stats</button>
+    <button data-view="kernels">Kernels</button>
+    <button data-view="metrics">Raw Metrics</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============================================================ LIVE -->
+<section id="view-live" class="view active">
+  <div class="grid">
+    <div class="card"><div class="label">Output throughput</div>
+      <div class="value"><span id="tps">–</span><span class="unit">tok/s</span></div></div>
+    <div class="card"><div class="label">Running sequences</div>
+      <div class="value" id="running">–</div></div>
+    <div class="card"><div class="label">Waiting</div>
+      <div class="value" id="waiting">–</div></div>
+    <div class="card"><div class="label">KV cache used</div>
+      <div class="value"><span id="kv">–</span><span class="unit">%</span></div></div>
+    <div class="card"><div class="label">TTFT p50 / p99</div>
+      <div class="value" style="font-size:19px"><span id="ttft">–</span><span class="unit">ms</span></div></div>
+    <div class="card"><div class="label">E2E p50 / p99</div>
+      <div class="value" style="font-size:19px"><span id="e2e">–</span><span class="unit">ms</span></div></div>
+    <div class="card"><div class="label">Preemptions</div>
+      <div class="value" id="preempt">–</div></div>
+    <div class="card"><div class="label">Prefix-cache tokens</div>
+      <div class="value" id="prefix">–</div></div>
+
+    <div class="card wide">
+      <div class="label">Throughput &amp; concurrency</div>
+      <canvas id="chart1"></canvas>
+      <div class="legend">
+        <span><i class="swatch" style="background:#58a6ff"></i>tokens/s</span>
+        <span><i class="swatch" style="background:#3fb950"></i>running sequences</span>
+        <span><i class="swatch" style="background:#d29922"></i>KV utilisation %</span>
+      </div>
+    </div>
+
+    <div class="card wide">
+      <div class="label">End-to-end latency percentiles</div>
+      <canvas id="chart2"></canvas>
+      <div class="legend">
+        <span><i class="swatch" style="background:#58a6ff"></i>p50 ms</span>
+        <span><i class="swatch" style="background:#f85149"></i>p99 ms</span>
+      </div>
+    </div>
+  </div>
+  <p class="hint" id="idleHint"></p>
+</section>
+
+<!-- ============================================================ LOAD -->
+<section id="view-load" class="view">
+  <p class="hint">
+    Traffic is generated by the dashboard process itself &mdash; no second terminal needed.
+    Watch <strong>Live</strong> while this runs: raising concurrency should multiply token
+    throughput while per-request latency grows far more slowly. That gap is the weight-load
+    amortisation continuous batching buys you.
+  </p>
+  <div class="row">
+    <div><label>Concurrency</label><input id="loadConc" type="number" value="8" min="1" max="64" style="width:110px"></div>
+    <div><label>Max tokens</label><input id="loadTokens" type="number" value="64" min="1" max="512" style="width:110px"></div>
+    <div><label>Prompt chars</label><input id="loadChars" type="number" value="200" min="20" max="4000" style="width:120px"></div>
+    <button class="act" id="loadStart">Start load</button>
+    <button class="act stop" id="loadStop" disabled>Stop</button>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="label">State</div><div class="value" style="font-size:19px" id="loadState">idle</div></div>
+    <div class="card"><div class="label">Completed</div><div class="value" id="loadDone">0</div></div>
+    <div class="card"><div class="label">Failed</div><div class="value" id="loadFailed">0</div></div>
+    <div class="card"><div class="label">Requests/s</div><div class="value" id="loadRps">0.0</div></div>
+    <div class="card"><div class="label">Tokens/s</div><div class="value" id="loadTps">0.0</div></div>
+    <div class="card"><div class="label">Latency p50</div><div class="value" style="font-size:19px"><span id="loadP50">–</span><span class="unit">ms</span></div></div>
+    <div class="card"><div class="label">Latency p99</div><div class="value" style="font-size:19px"><span id="loadP99">–</span><span class="unit">ms</span></div></div>
+    <div class="card"><div class="label">Tail ratio p99/p50</div><div class="value" id="loadTail">–</div></div>
+  </div>
+</section>
+
+<!-- ====================================================== PLAYGROUND -->
+<section id="view-playground" class="view">
+  <p class="hint">
+    Sends one request through the engine. <code>temperature 0</code> is greedy and therefore
+    deterministic &mdash; the same prompt returns the same tokens every time.
+  </p>
+  <div style="margin-bottom:12px">
+    <label>Prompt</label>
+    <textarea id="pgPrompt">Explain paged attention in one sentence.</textarea>
+  </div>
+  <div class="row">
+    <div><label>Max tokens</label><input id="pgTokens" type="number" value="32" min="1" max="512" style="width:110px"></div>
+    <div><label>Temperature</label><input id="pgTemp" type="number" value="0" min="0" max="2" step="0.1" style="width:110px"></div>
+    <button class="act" id="pgSend">Generate</button>
+  </div>
+  <div class="grid" id="pgMetrics" style="display:none">
+    <div class="card"><div class="label">Output tokens</div><div class="value" id="pgOut">–</div></div>
+    <div class="card"><div class="label">TTFT</div><div class="value" style="font-size:19px"><span id="pgTtft">–</span><span class="unit">ms</span></div></div>
+    <div class="card"><div class="label">End-to-end</div><div class="value" style="font-size:19px"><span id="pgE2e">–</span><span class="unit">ms</span></div></div>
+    <div class="card"><div class="label">Per output token</div><div class="value" style="font-size:19px"><span id="pgTpot">–</span><span class="unit">ms</span></div></div>
+  </div>
+  <h2>Response</h2>
+  <pre id="pgResult">–</pre>
+</section>
+
+<!-- =========================================================== STATS -->
+<section id="view-stats" class="view">
+  <p class="hint">
+    Live from <code>/stats</code>: scheduler counters, paged-KV occupancy and RadixAttention
+    hit rate. <code>tokens_per_step</code> above 1 means prefill and decode are being batched
+    together.
+  </p>
+  <div class="grid" id="statsCards"></div>
+  <h2>Full payload</h2>
+  <pre id="statsRaw">loading…</pre>
+</section>
+
+<!-- ========================================================= KERNELS -->
+<section id="view-kernels" class="view">
+  <p class="hint">
+    Which kernel backends this machine actually has. Unavailable entries state the reason
+    instead of failing at import &mdash; Triton genuinely requires an NVIDIA GPU.
+  </p>
+  <table id="kernelTable"><thead><tr>
+    <th>Backend</th><th>Status</th><th>Reason</th><th>Ops</th>
+  </tr></thead><tbody><tr><td colspan="4" style="color:var(--muted)">loading…</td></tr></tbody></table>
+</section>
+
+<!-- ========================================================= METRICS -->
+<section id="view-metrics" class="view">
+  <p class="hint">
+    The raw Prometheus exposition text, exactly as a scraper sees it. Percentiles elsewhere in
+    this UI are interpolated from these histogram buckets, the same way
+    <code>histogram_quantile()</code> does.
+  </p>
+  <pre id="rawMetrics">loading…</pre>
+</section>
+
+</main>
+
+<script>
+const fmt = (v, d = 1) =>
+  (v === null || v === undefined || Number.isNaN(v)) ? '–' : Number(v).toFixed(d);
+
+let activeView = 'live';
+document.querySelectorAll('nav button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+    btn.classList.add('active');
+    activeView = btn.dataset.view;
+    document.getElementById('view-' + activeView).classList.add('active');
+    refreshActiveView();
+  });
+});
+
+/* ------------------------------------------------------------- charts */
+function drawSeries(canvas, series) {
+  const ratio = window.devicePixelRatio || 1;
+  const width = canvas.clientWidth, height = canvas.clientHeight;
+  if (!width) return;
+  canvas.width = width * ratio; canvas.height = height * ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  const pad = { l: 48, r: 12, t: 10, b: 18 };
+  const plotW = width - pad.l - pad.r, plotH = height - pad.t - pad.b;
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1;
+  ctx.strokeRect(pad.l, pad.t, plotW, plotH);
+
+  const all = series.flatMap((s) => s.values.filter((v) => Number.isFinite(v)));
+  const max = Math.max(1, ...all);
+
+  ctx.fillStyle = '#8b949e'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + plotH - (i / 4) * plotH;
+    ctx.fillText((max * i / 4).toFixed(max < 10 ? 1 : 0), pad.l - 7, y + 3);
+    if (i > 0) {
+      ctx.strokeStyle = '#21262d';
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + plotW, y); ctx.stroke();
+    }
+  }
+  for (const s of series) {
+    if (s.values.length < 2) continue;
+    ctx.strokeStyle = s.color; ctx.lineWidth = 1.8; ctx.beginPath();
+    s.values.forEach((value, index) => {
+      const x = pad.l + (index / (s.values.length - 1)) * plotW;
+      const y = pad.t + plotH - (Math.max(0, value || 0) / max) * plotH;
+      index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+}
+
+/* --------------------------------------------------------- live poll */
+async function tickLive() {
+  try {
+    const state = await (await fetch('/api/state')).json();
+    const s = state.summary;
+
+    document.getElementById('dot').className = 'dot ' + (state.connected ? 'up' : 'down');
+    document.getElementById('status').textContent =
+      state.connected ? 'connected' : 'disconnected';
+    document.getElementById('target').textContent = state.target;
+    document.getElementById('updated').textContent =
+      state.updatedAt ? ('updated ' + state.updatedAt.slice(11, 19) + 'Z') : '';
+    document.getElementById('headerError').textContent =
+      state.lastError ? ('error: ' + state.lastError) : '';
+
+    document.getElementById('tps').textContent = fmt(s.tokensPerSecond, 1);
+    document.getElementById('running').textContent = fmt(s.running, 0);
+    document.getElementById('waiting').textContent = fmt(s.waiting, 0);
+    document.getElementById('kv').textContent = fmt(s.kvUtilization, 1);
+    document.getElementById('ttft').textContent = fmt(s.ttftP50, 1) + ' / ' + fmt(s.ttftP99, 1);
+    document.getElementById('e2e').textContent = fmt(s.e2eP50, 1) + ' / ' + fmt(s.e2eP99, 1);
+    document.getElementById('preempt').textContent = fmt(s.preemptions, 0);
+    document.getElementById('prefix').textContent = fmt(s.prefixCacheTokens, 0);
+
+    document.getElementById('idleHint').textContent =
+      (s.requests > 0)
+        ? ''
+        : 'No requests have hit the engine yet — the charts are flat because there is nothing to plot. Open the Load tab and press Start load, or send one request from Playground.';
+
+    const h = state.history || [];
+    drawSeries(document.getElementById('chart1'), [
+      { color: '#58a6ff', values: h.map((x) => x.tokensPerSecond) },
+      { color: '#3fb950', values: h.map((x) => x.running) },
+      { color: '#d29922', values: h.map((x) => x.kv) },
+    ]);
+    drawSeries(document.getElementById('chart2'), [
+      { color: '#58a6ff', values: h.map((x) => x.p50) },
+      { color: '#f85149', values: h.map((x) => x.p99) },
+    ]);
+
+    renderLoad(state.load);
+  } catch (error) {
+    document.getElementById('headerError').textContent = 'dashboard error: ' + error.message;
+  }
+}
+
+/* --------------------------------------------------------------- load */
+function renderLoad(l) {
+  if (!l) return;
+  document.getElementById('loadState').textContent =
+    l.running ? ('running ×' + l.concurrency) : 'idle';
+  document.getElementById('loadDone').textContent = l.completed;
+  document.getElementById('loadFailed').textContent = l.failed;
+  document.getElementById('loadRps').textContent = fmt(l.requestsPerSecond, 2);
+  document.getElementById('loadTps').textContent = fmt(l.tokensPerSecond, 1);
+  document.getElementById('loadP50').textContent = fmt(l.p50, 0);
+  document.getElementById('loadP99').textContent = fmt(l.p99, 0);
+  document.getElementById('loadTail').textContent =
+    (l.p50 && l.p99) ? fmt(l.p99 / l.p50, 2) : '–';
+  document.getElementById('loadStart').disabled = l.running;
+  document.getElementById('loadStop').disabled = !l.running;
+}
+
+document.getElementById('loadStart').addEventListener('click', async () => {
+  const body = {
+    concurrency: parseInt(document.getElementById('loadConc').value, 10),
+    maxTokens: parseInt(document.getElementById('loadTokens').value, 10),
+    promptChars: parseInt(document.getElementById('loadChars').value, 10),
+  };
+  renderLoad(await (await fetch('/api/load/start',
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body) })).json());
+});
+
+document.getElementById('loadStop').addEventListener('click', async () => {
+  renderLoad(await (await fetch('/api/load/stop', { method: 'POST' })).json());
+});
+
+/* --------------------------------------------------------- playground */
+document.getElementById('pgSend').addEventListener('click', async () => {
+  const button = document.getElementById('pgSend');
+  button.disabled = true;
+  document.getElementById('pgResult').textContent = 'generating…';
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: document.getElementById('pgPrompt').value,
+        max_tokens: parseInt(document.getElementById('pgTokens').value, 10),
+        temperature: parseFloat(document.getElementById('pgTemp').value),
+        ignore_eos: true,
+      }),
+    });
+    const body = await response.json();
+    document.getElementById('pgResult').textContent = JSON.stringify(body, null, 2);
+    if (body.metrics) {
+      document.getElementById('pgMetrics').style.display = '';
+      document.getElementById('pgOut').textContent = body.output_tokens;
+      document.getElementById('pgTtft').textContent = fmt(body.metrics.ttft_ms, 1);
+      document.getElementById('pgE2e').textContent = fmt(body.metrics.e2e_ms, 1);
+      document.getElementById('pgTpot').textContent = fmt(body.metrics.tpot_ms, 2);
+    }
+  } catch (error) {
+    document.getElementById('pgResult').textContent = 'error: ' + error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+/* ------------------------------------------------------- other views */
+async function refreshStats() {
+  try {
+    const body = await (await fetch('/api/stats')).json();
+    document.getElementById('statsRaw').textContent = JSON.stringify(body, null, 2);
+    const sched = (body.engine && body.engine.scheduler) || {};
+    const kv = (body.engine && body.engine.kv_cache) || {};
+    const prefix = (body.engine && body.engine.prefix_cache) || {};
+    const cards = [
+      ['Engine steps', sched.steps], ['Prefill tokens', sched.prefill_tokens],
+      ['Decode tokens', sched.decode_tokens], ['Tokens per step', sched.tokens_per_step],
+      ['Mixed steps', sched.mixed_steps], ['Preemptions', sched.preemptions],
+      ['KV blocks used', kv.used], ['KV utilisation', kv.utilization],
+      ['Prefix hit rate', prefix.hit_rate], ['Cached blocks', prefix.cached_blocks],
+    ];
+    document.getElementById('statsCards').innerHTML = cards.map(([label, value]) =>
+      `<div class="card"><div class="label">${label}</div>
+       <div class="value" style="font-size:21px">${value === undefined || value === null ? '–' : value}</div></div>`
+    ).join('');
+  } catch (error) {
+    document.getElementById('statsRaw').textContent = 'error: ' + error.message;
+  }
+}
+
+async function refreshKernels() {
+  try {
+    const body = await (await fetch('/api/kernels')).json();
+    document.querySelector('#kernelTable tbody').innerHTML = Object.entries(body)
+      .map(([name, info]) => `<tr>
+        <td><strong>${name}</strong></td>
+        <td><span class="pill ${info.available ? 'ok' : 'no'}">${info.available ? 'available' : 'unavailable'}</span></td>
+        <td style="color:var(--muted)">${info.reason || ''}</td>
+        <td style="color:var(--muted)">${(info.ops || []).join(', ')}</td>
+      </tr>`).join('');
+  } catch (error) {
+    document.querySelector('#kernelTable tbody').innerHTML =
+      `<tr><td colspan="4" class="err">error: ${error.message}</td></tr>`;
+  }
+}
+
+async function refreshRawMetrics() {
+  try {
+    document.getElementById('rawMetrics').textContent = await (await fetch('/api/raw-metrics')).text();
+  } catch (error) {
+    document.getElementById('rawMetrics').textContent = 'error: ' + error.message;
+  }
+}
+
+function refreshActiveView() {
+  if (activeView === 'stats') refreshStats();
+  if (activeView === 'kernels') refreshKernels();
+  if (activeView === 'metrics') refreshRawMetrics();
+}
+
+// Prefetch the backend report once at startup. It is effectively static, and
+// fetching it lazily meant the tab could render empty while the engine was busy
+// serving load.
+refreshKernels();
+
+tickLive();
+setInterval(tickLive, 1000);
+setInterval(refreshActiveView, 2000);
+</script>
+</body>
+</html>

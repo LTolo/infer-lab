@@ -1,0 +1,31 @@
+# Prometheus scrape configuration for infer-lab.
+#
+# Run without Docker:
+#   1. download the Prometheus zip/tarball for your OS
+#   2. unpack it to ./vendor/prometheus/  (or anywhere on PATH)
+#   3. python scripts/run_stack.py        -- it finds and starts it automatically
+#
+# A 1s scrape interval is far too aggressive for production; it is used here
+# because the dashboard should react while you are watching a benchmark run.
+
+global:
+  scrape_interval: 1s
+  evaluation_interval: 5s
+  external_labels:
+    environment: local
+    project: infer-lab
+
+rule_files:
+  - alerts.yml
+
+scrape_configs:
+  - job_name: infer-lab
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["127.0.0.1:8000"]
+        labels:
+          service: inference-engine
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["127.0.0.1:9090"]

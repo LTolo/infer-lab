@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "infer-lab"
+version = "0.1.0"
+description = "A vertically-integrated LLM inference engine laboratory: PagedAttention, RadixAttention, continuous batching, chunked prefill, speculative decoding, quantization, kernels+bindings, tensor/pipeline parallelism, roofline analysis and production observability."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "infer-lab contributors" }]
+keywords = ["llm", "inference", "pagedattention", "vllm", "sglang", "cuda", "profiling"]
+
+dependencies = [
+  "numpy>=1.24",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "pydantic>=2.5",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.1"]
+bindings = ["pybind11>=2.11", "nanobind>=2.0"]
+plots = ["matplotlib>=3.7"]
+dev = ["pytest>=7.4", "pytest-timeout>=2.2", "httpx>=0.26", "ruff>=0.4"]
+all = [
+  "torch>=2.1", "pybind11>=2.11", "nanobind>=2.0", "matplotlib>=3.7",
+  "pytest>=7.4", "pytest-timeout>=2.2", "httpx>=0.26", "ruff>=0.4",
+]
+
+[project.scripts]
+infer-lab = "infer_lab.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"infer_lab.kernels" = ["csrc/*.cpp", "csrc/*.h"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --timeout=180"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+  "slow: longer running end-to-end tests",
+  "gpu: requires an NVIDIA GPU",
+  "native: requires a working C++ toolchain",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]

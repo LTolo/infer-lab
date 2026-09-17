@@ -1,0 +1,70 @@
+# Alerting rules that encode the failure modes this engine actually has.
+#
+# Each rule exists because of a specific operational lesson, noted in the
+# annotation -- an alert without a documented reason gets ignored at 3am.
+
+groups:
+  - name: infer-lab-saturation
+    interval: 10s
+    rules:
+      - alert: KVCacheNearlyExhausted
+        expr: infer_lab_kv_cache_utilization_ratio > 0.9
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "KV cache above 90% utilisation"
+          description: >
+            Once the KV pool saturates the scheduler starts preempting, which
+            converts throughput into recomputation. Reduce max_num_seqs, enable
+            quantized KV, or add capacity before this becomes a latency cliff.
+
+      - alert: SustainedPreemption
+        expr: rate(infer_lab_preemptions_total[2m]) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sequences are being preempted continuously"
+          description: >
+            Recompute-preemption is doing the same work twice. Sustained
+            preemption means the admission limit is set higher than the memory
+            can actually sustain.
+
+      - alert: QueueBuildUp
+        expr: infer_lab_waiting_sequences > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Request queue is growing"
+          description: >
+            Arrival rate exceeds service rate. Latency will grow without bound
+            until admission control or capacity changes.
+
+  - name: infer-lab-latency
+    interval: 10s
+    rules:
+      - alert: TimeToFirstTokenSLOBreach
+        expr: >
+          histogram_quantile(0.99, rate(infer_lab_ttft_milliseconds_bucket[5m])) > 2000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TTFT p99 above 2s"
+          description: >
+            TTFT is dominated by prefill and queueing. Check whether chunked
+            prefill is enabled and whether long prompts are blocking the batch.
+
+      - alert: DecodeStalled
+        expr: rate(infer_lab_tokens_total{phase="decode"}[2m]) == 0
+            and infer_lab_running_sequences > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sequences are running but no tokens are produced"
+          description: >
+            The classic distributed-inference hang: a collective is blocked on a
+            dead peer, so every rank waits for ever. Check the ring health monitor.
