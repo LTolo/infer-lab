@@ -116,9 +116,9 @@ memory-bound — and why batching, quantization and speculative decoding exist.
 | **Continuous batching** — iteration-level scheduling with a token budget | Orca / vLLM | `engine/scheduler.py` |
 | **Chunked prefill** — long prompts sliced and interleaved with decode | vLLM | `engine/scheduler.py` |
 | **Preemption** — recompute-based eviction with a forward-progress guarantee | vLLM | `engine/scheduler.py`, ADR-0004, ADR-0006 |
-| **Speculative decoding** — draft proposal + single-pass target verification | — | `engine/speculative.py` |
-| **INT8 per-channel quantization** | — | `quant/int8.py` |
-| **Batched decode** — all running sequences in one GEMM per layer | — | `model/numpy_model.py` |
+| **Speculative decoding** — draft proposal + single-pass target verification | custom | `engine/speculative.py` |
+| **INT8 per-channel quantization** | custom | `quant/int8.py` |
+| **Batched decode** — all running sequences in one GEMM per layer | custom | `model/numpy_model.py` |
 
 ### Kernels and bindings
 
