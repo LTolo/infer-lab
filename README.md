@@ -26,7 +26,7 @@ It reimplements the mechanisms that make modern inference engines fast
 speculative decoding, INT8 quantization) rather than wrapping a framework that
 hides them.
 
-**No Docker. No GPU required. No paid services. Two commands.**
+**No GPU required. No paid services. Two commands.**
 
 ```bash
 python scripts/verify.py        # prove the whole project runs error-free
